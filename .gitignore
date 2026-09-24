@@ -40,11 +40,6 @@ out/
 # TypeScript
 *.tsbuildinfo
 
-# Optional local databases
-*.sqlite
-*.sqlite3
-*.db
-
 # OS files
 .DS_Store
 Thumbs.db
