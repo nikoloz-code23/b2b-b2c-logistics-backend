@@ -1,6 +1,7 @@
 import express, { type Express, NextFunction, Request, Response } from "express";
 import cors from "cors";
 import db from "./config/database";
+import { type StatementSync } from "node:sqlite";
 
 const app : Express = express();
 const port : number = 3000;
@@ -28,15 +29,17 @@ app.use((_: Request, res: Response, next: NextFunction) => {
   next();
 })
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_: Request, res: Response) => {
   let sql = "SELECT * FROM users;";
 
-  db.all(sql, [], (err: Error, rows: any) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
+  try {
+    const query : StatementSync = db.prepare(sql);
+    return res.json(query.all());
+  } catch (e) {
+    if (e instanceof Error) {
+      return res.status(500).json({ error: e.message });
     }
-    res.json(rows)
-  })
+  }
 })
 
 app.listen(port, () => {
