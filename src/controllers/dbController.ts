@@ -8,15 +8,29 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface UserData {
+export interface BaseUserData {
   photoURL: string;
   firstName: string | null;
   lastName: string | null;
   companyName: string | null;
-  companyID: number | null;
+  companyId: string;
   phoneNumber: string;
-  password: string;
   email: string;
+}
+
+export interface OverviewUserData extends BaseUserData {
+  drivers: CompanyDriver[] | null;
+}
+
+export interface CompanyDriver {
+  photoUrl: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+}
+
+export interface UserData extends BaseUserData {
+  password: string;
 }
 
 export interface User extends UserData {
@@ -45,7 +59,7 @@ export function newUser(db: DatabaseSync, data: User) {
       data.firstName,
       data.lastName,
       data.companyName,
-      data.companyID,
+      data.companyId,
       data.phoneNumber,
       data.email,
       data.password,
@@ -77,7 +91,7 @@ export function updateUser(db: DatabaseSync, data: UserData, id: number) {
       data.firstName,
       data.lastName,
       data.companyName,
-      data.companyID,
+      data.companyId,
       data.phoneNumber,
       data.password,
       id,
@@ -92,7 +106,9 @@ export function updateUser(db: DatabaseSync, data: UserData, id: number) {
 export function loginUser(db: DatabaseSync, data: LoginRequest) {
   try {
     const loginUser = db
-      .prepare("SELECT * FROM users WHERE email = ? AND password = ?")
+      .prepare(
+        "SELECT userId, type, photoURL, firstName, lastName, companyName, companyID, phoneNumber, email FROM users WHERE email = ? AND password = ?",
+      )
       .get(data.email, data.password);
 
     if (!loginUser) {
@@ -124,6 +140,45 @@ export function loginUser(db: DatabaseSync, data: LoginRequest) {
       throw e;
     }
 
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function getUserData(db: DatabaseSync, id: number) {
+  try {
+    const userData = db
+      .prepare(
+        "SELECT photoURL, firstName, lastName, companyName, companyId, phoneNumber, email FROM users WHERE userId = ?",
+      )
+      .get(id) as any;
+
+    if (!userData) {
+      throw new HttpError("The user doesn't exist.", 404);
+    }
+
+    const driverArrayData = db
+      .prepare(
+        "SELECT photoUrl, firstName, lastName, phoneNumber FROM companyDriver WHERE companyId = ?",
+      )
+      .all(id) as unknown as CompanyDriver[];
+
+    const returnData: OverviewUserData = {
+      photoURL: userData.photoURL as string,
+      firstName: userData.firstName as string,
+      lastName: userData.lastName as string,
+      companyName: userData.companyName as string,
+      companyId: userData.companyId as string,
+      phoneNumber: userData.phoneNumber as string,
+      email: userData.email as string,
+      drivers: driverArrayData,
+    };
+
+    return returnData;
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+    console.error("databse runtime error", e);
     throw new HttpError("Internal Server Error", 500);
   }
 }
