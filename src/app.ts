@@ -7,7 +7,7 @@ import express, {
 import cors from "cors";
 import db, { HttpError } from "./config/database";
 import { type StatementSync } from "node:sqlite";
-import { newUser, User } from "./controllers/dbController";
+import { newUser } from "./controllers/dbController";
 
 const app: Express = express();
 const port: number = 3000;
@@ -29,7 +29,6 @@ app.use((_: Request, res: Response, next: NextFunction) => {
     "X-Frame-Options": "DENY",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Content-Type": "application/json; charset=utf-8",
-    Accept: "application/json",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
   });
