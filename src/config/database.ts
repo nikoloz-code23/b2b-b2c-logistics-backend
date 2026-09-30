@@ -23,6 +23,16 @@ export class HttpResponse {
   }
 }
 
+export class LoginResponse {
+  constructor(message: string, token: string, user?: any) {
+    return {
+      message,
+      token,
+      user,
+    };
+  }
+}
+
 // Current directory I am in.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Where db.sqlite resides in.
