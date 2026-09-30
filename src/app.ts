@@ -93,7 +93,9 @@ app.post("/login", (req: Request, res: Response) => {
   }
 });
 
-app.post("/logout", (req: Request, res: Response) => {});
+app.get("/auth", authenticateToken, (_: Request, res: Response) => {
+  return res.status(200);
+});
 
 app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
   const { id } = req.params;
