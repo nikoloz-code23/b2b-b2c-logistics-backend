@@ -5,8 +5,9 @@ import express, {
   Response,
 } from "express";
 import cors from "cors";
-import db from "./config/database";
+import db, { HttpError } from "./config/database";
 import { type StatementSync } from "node:sqlite";
+import { newUser, User } from "./controllers/dbController";
 
 const app: Express = express();
 const port: number = 3000;
@@ -18,6 +19,7 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
+app.use(express.json());
 app.use(cors(corsOptions));
 app.use((_: Request, res: Response, next: NextFunction) => {
   res.set({
@@ -42,6 +44,16 @@ app.get("/", (_: Request, res: Response) => {
   } catch (e) {
     if (e instanceof Error) {
       return res.status(500).json({ error: e.message });
+    }
+  }
+});
+
+app.post("/register", (req: Request, res: Response) => {
+  try {
+    newUser(db, req.body);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
     }
   }
 });
