@@ -7,10 +7,14 @@ import express, {
 import cors from "cors";
 import db, { HttpError, HttpResponse } from "./config/database";
 import { type StatementSync } from "node:sqlite";
-import { loginUser, newUser, updateUser } from "./controllers/dbController";
+import {
+  getUserData,
+  loginUser,
+  newUser,
+  updateUser,
+} from "./controllers/dbController";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env";
-import { decode } from "node:punycode";
 
 const app: Express = express();
 const port: number = 3000;
@@ -93,12 +97,25 @@ app.post("/login", (req: Request, res: Response) => {
   }
 });
 
-app.post("/logout", (_: Request, res: Response) => {
-  res.status(200).json(new HttpResponse("Logged out succesfully."));
-});
-
 app.get("/auth", authenticateToken, (_: Request, res: Response) => {
   return res.status(200);
+});
+
+app.get("/overview/:userId", (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  try {
+    const result = getUserData(db, Number(userId));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.post("/logout", (_: Request, res: Response) => {
+  res.status(200).json(new HttpResponse("Logged out succesfully."));
 });
 
 app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
