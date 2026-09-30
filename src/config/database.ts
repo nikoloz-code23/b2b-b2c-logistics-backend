@@ -14,6 +14,15 @@ export class HttpError extends Error {
   }
 }
 
+export class HttpResponse {
+  constructor(message: string, id?: any) {
+    return {
+      message,
+      id,
+    };
+  }
+}
+
 // Current directory I am in.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Where db.sqlite resides in.
