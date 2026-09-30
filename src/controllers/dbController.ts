@@ -1,10 +1,12 @@
-import {
-  DatabaseSync,
-  StatementResultingChanges,
-  StatementSync,
-} from "node:sqlite";
+import { DatabaseSync, StatementSync } from "node:sqlite";
+import { HttpError, HttpResponse, LoginResponse } from "../config/database";
+import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../../env";
 
-import { HttpError, HttpResponse } from "../config/database";
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
 export interface UserData {
   photoURL: string;
@@ -85,4 +87,43 @@ export function updateUser(db: DatabaseSync, data: UserData, id: number) {
     "User has been succesfully edited.",
     existingUser?.userId,
   );
+}
+
+export function loginUser(db: DatabaseSync, data: LoginRequest) {
+  try {
+    const loginUser = db
+      .prepare("SELECT * FROM users WHERE email = ? AND password = ?")
+      .get(data.email, data.password);
+
+    if (!loginUser) {
+      throw new HttpError("Email or password is wrong!", 400);
+    }
+
+    const token = jwt.sign(
+      { type: loginUser.type, id: loginUser.id },
+      JWT_SECRET,
+      {
+        algorithm: "HS256",
+        expiresIn: "1h",
+      },
+    );
+
+    return new LoginResponse("User has succesfully logged in.", token, {
+      id: loginUser.userId,
+      type: loginUser.type,
+      photoURL: loginUser.photoURL,
+      firstName: loginUser.firstName,
+      lastName: loginUser.lastName,
+      companyName: loginUser.companyName,
+      companyID: loginUser.companyID,
+      phoneNumber: loginUser.phoneNumber,
+      email: loginUser.email,
+    });
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+
+    throw new HttpError("Internal Server Error", 500);
+  }
 }
