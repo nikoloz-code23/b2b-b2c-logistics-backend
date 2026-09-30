@@ -93,6 +93,10 @@ app.post("/login", (req: Request, res: Response) => {
   }
 });
 
+app.post("/logout", (_: Request, res: Response) => {
+  res.status(200).json(new HttpResponse("Logged out succesfully."));
+});
+
 app.get("/auth", authenticateToken, (_: Request, res: Response) => {
   return res.status(200);
 });
