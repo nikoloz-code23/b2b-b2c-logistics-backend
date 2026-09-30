@@ -5,9 +5,12 @@ import express, {
   Response,
 } from "express";
 import cors from "cors";
-import db, { HttpError } from "./config/database";
+import db, { HttpError, HttpResponse } from "./config/database";
 import { type StatementSync } from "node:sqlite";
-import { newUser } from "./controllers/dbController";
+import { loginUser, newUser, updateUser } from "./controllers/dbController";
+import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../env";
+import { decode } from "node:punycode";
 
 const app: Express = express();
 const port: number = 3000;
@@ -35,6 +38,27 @@ app.use((_: Request, res: Response, next: NextFunction) => {
   next();
 });
 
+const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+  const authHeader: string | undefined = req.headers["authorization"];
+  const token: string | undefined = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json(new HttpResponse("Access denied. No token provided."));
+  }
+
+  jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }, (err) => {
+    if (err) {
+      return res
+        .status(403)
+        .json(new HttpResponse("Invalid or experied token."));
+    }
+
+    next();
+  });
+};
+
 app.get("/", (_: Request, res: Response) => {
   let sql = "SELECT * FROM users;";
   try {
@@ -49,7 +73,34 @@ app.get("/", (_: Request, res: Response) => {
 
 app.post("/register", (req: Request, res: Response) => {
   try {
-    newUser(db, req.body);
+    const result: HttpResponse = newUser(db, req.body);
+    return res.status(201).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.post("/login", (req: Request, res: Response) => {
+  try {
+    const result: HttpResponse = loginUser(db, req.body);
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.post("/logout", (req: Request, res: Response) => {});
+
+app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const result: HttpResponse = updateUser(db, req.body, Number(id));
+    return res.status(200).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
       return res.status(e.statusCode).json(e.message);
