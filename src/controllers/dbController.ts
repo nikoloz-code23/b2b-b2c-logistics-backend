@@ -13,7 +13,7 @@ export interface BaseUserData {
   firstName: string | null;
   lastName: string | null;
   companyName: string | null;
-  companyId: string;
+  idNumber: string;
   phoneNumber: string;
   email: string;
 }
@@ -46,7 +46,7 @@ export interface Route {
   car: string;
   price: number;
   userId: number;
-  companyDriverid: number | null;
+  companyDriverId: number | null;
 }
 
 export interface RouteWithId extends Route {
@@ -55,7 +55,7 @@ export interface RouteWithId extends Route {
 
 export function newUser(db: DatabaseSync, data: User) {
   const insert: StatementSync = db.prepare(
-    "INSERT INTO users (type, photoURL, firstName, lastName, companyName, companyID, phoneNumber, email, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING userId",
+    "INSERT INTO users (type, photoURL, firstName, lastName, companyName, idNumber, phoneNumber, email, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING userId",
   );
 
   db.exec("BEGIN IMMEDIATE TRANSACTION;");
@@ -75,7 +75,7 @@ export function newUser(db: DatabaseSync, data: User) {
       data.firstName,
       data.lastName,
       data.companyName,
-      data.companyId,
+      data.idNumber,
       data.phoneNumber,
       data.email,
       data.password,
@@ -101,14 +101,14 @@ export function updateUser(db: DatabaseSync, data: UserData, id: number) {
   try {
     const existingUser = db
       .prepare(
-        "UPDATE users SET photoURL=?, firstName=?, lastName=?, companyName=?, companyID=?, phoneNumber=?, password=? WHERE userId=? RETURNING userId",
+        "UPDATE users SET photoURL=?, firstName=?, lastName=?, companyName=?, idNumber=?, phoneNumber=?, password=? WHERE userId=? RETURNING userId",
       )
       .get(
         data.photoURL,
         data.firstName,
         data.lastName,
         data.companyName,
-        data.companyId,
+        data.idNumber,
         data.phoneNumber,
         data.password,
         id,
@@ -134,7 +134,7 @@ export function loginUser(db: DatabaseSync, data: LoginRequest) {
   try {
     const loginUser = db
       .prepare(
-        "SELECT userId, type, photoURL, firstName, lastName, companyName, companyID, phoneNumber, email FROM users WHERE email = ? AND password = ?",
+        "SELECT userId, type, photoURL, firstName, lastName, companyName, idNumber, phoneNumber, email FROM users WHERE email = ? AND password = ?",
       )
       .get(data.email, data.password);
 
@@ -158,7 +158,7 @@ export function loginUser(db: DatabaseSync, data: LoginRequest) {
       firstName: loginUser.firstName,
       lastName: loginUser.lastName,
       companyName: loginUser.companyName,
-      companyID: loginUser.companyID,
+      idNumber: loginUser.idNumber,
       phoneNumber: loginUser.phoneNumber,
       email: loginUser.email,
     });
@@ -175,7 +175,7 @@ export function getUserData(db: DatabaseSync, id: number) {
   try {
     const userData = db
       .prepare(
-        "SELECT photoURL, firstName, lastName, companyName, companyId, phoneNumber, email FROM users WHERE userId = ?",
+        "SELECT photoURL, firstName, lastName, companyName, idNumber, phoneNumber, email FROM users WHERE userId = ?",
       )
       .get(id) as any;
 
@@ -194,7 +194,7 @@ export function getUserData(db: DatabaseSync, id: number) {
       firstName: userData.firstName as string,
       lastName: userData.lastName as string,
       companyName: userData.companyName as string,
-      companyId: userData.companyId as string,
+      idNumber: userData.idNumber as string,
       phoneNumber: userData.phoneNumber as string,
       email: userData.email as string,
       drivers: driverArrayData,
@@ -213,7 +213,7 @@ export function getRouteData(db: DatabaseSync, id: number) {
   try {
     const routeData = db
       .prepare(
-        "SELECT fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverid FROM route WHERE routeId = ?",
+        "SELECT fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverId FROM routes WHERE routeId = ?",
       )
       .get(id) as Route | undefined;
 
@@ -232,7 +232,7 @@ export function getRouteData(db: DatabaseSync, id: number) {
 
 export function addRoute(db: DatabaseSync, data: Route) {
   const insert: StatementSync = db.prepare(
-    "INSERT INTO route (fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING routeId",
+    "INSERT INTO routes (fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING routeId",
   );
 
   db.exec("BEGIN IMMEDIATE TRANSACTION;");
@@ -247,7 +247,7 @@ export function addRoute(db: DatabaseSync, data: Route) {
       data.car,
       data.price,
       data.userId,
-      data.companyDriverid,
+      data.companyDriverId,
     ) as { userId: number } | undefined;
 
     db.exec("COMMIT;");
@@ -267,7 +267,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
   try {
     const editedRoute = db
       .prepare(
-        "UPDATE route SET fromCity=?, toCity=?, fromCoordinate=?, toCoordinate=?, passengerCount=?, car=?, price=?, companyDriverid=? WHERE routeId = ? RETURNING routeId",
+        "UPDATE routes SET fromCity=?, toCity=?, fromCoordinate=?, toCoordinate=?, passengerCount=?, car=?, price=?, companyDriverId=? WHERE routeId = ? RETURNING routeId",
       )
       .get(
         data.fromCity,
@@ -277,7 +277,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
         data.passengerCount,
         data.car,
         data.price,
-        data.companyDriverid,
+        data.companyDriverId,
         id,
       ) as RouteWithId | undefined;
 
@@ -300,7 +300,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
 
 export function deleteRoute(db: DatabaseSync, id: number) {
   try {
-    db.prepare("DELETE FROM route WHERE routeId = ?").run(id);
+    db.prepare("DELETE FROM routes WHERE routeId = ?").run(id);
   } catch (e) {
     throw new HttpError("Internal Server Error", 500);
   }
