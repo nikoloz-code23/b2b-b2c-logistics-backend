@@ -9,6 +9,7 @@ import db, { HttpError, HttpResponse } from "./config/database";
 import { type StatementSync } from "node:sqlite";
 import {
   deleteRoute,
+  editRoute,
   getRouteData,
   getUserData,
   loginUser,
@@ -147,20 +148,37 @@ app.get("/route/:routeId", (req: Request, res: Response) => {
   }
 });
 
-app.delete("/route/:routeId", (req: Request, res: Response) => {
+app.put("/route/:routeId", authenticateToken, (req: Request, res: Response) => {
   const { routeId } = req.params;
 
   try {
-    deleteRoute(db, Number(routeId));
-    return res
-      .status(200)
-      .json(new HttpResponse("The route has been succesfully deleted."));
+    const result: HttpResponse = editRoute(db, req.body, Number(routeId));
+    return res.status(200).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
       return res.status(e.statusCode).json(e.message);
     }
   }
 });
+
+app.delete(
+  "/route/:routeId",
+  authenticateToken,
+  (req: Request, res: Response) => {
+    const { routeId } = req.params;
+
+    try {
+      deleteRoute(db, Number(routeId));
+      return res
+        .status(200)
+        .json(new HttpResponse("The route has been succesfully deleted."));
+    } catch (e) {
+      if (e instanceof HttpError) {
+        return res.status(e.statusCode).json(e.message);
+      }
+    }
+  },
+);
 
 app.listen(port, () => {
   console.log(`The server is started on http://localhost:${port}`);
