@@ -230,6 +230,38 @@ export function getRouteData(db: DatabaseSync, id: number) {
   }
 }
 
+export function addRoute(db: DatabaseSync, data: Route) {
+  const insert: StatementSync = db.prepare(
+    "INSERT INTO route (fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING routeId",
+  );
+
+  db.exec("BEGIN IMMEDIATE TRANSACTION;");
+
+  try {
+    const result = insert.get(
+      data.fromCity,
+      data.toCity,
+      data.fromCoordinate,
+      data.toCoordinate,
+      data.passengerCount,
+      data.car,
+      data.price,
+      data.userId,
+      data.companyDriverId,
+    ) as { userId: number } | undefined;
+
+    db.exec("COMMIT;");
+
+    return new HttpResponse(
+      "Route has been succesfully added.",
+      result?.userId,
+    );
+  } catch (error) {
+    db.exec("ROLLBACK;");
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
 export function editRoute(db: DatabaseSync, data: Route, id: number) {
   try {
     const editedRoute = db
