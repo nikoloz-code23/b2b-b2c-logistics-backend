@@ -46,7 +46,7 @@ export interface Route {
   car: string;
   price: number;
   userId: number;
-  companyDriverId: number | null;
+  companyDriverid: number | null;
 }
 
 export interface RouteWithId extends Route {
@@ -247,7 +247,7 @@ export function addRoute(db: DatabaseSync, data: Route) {
       data.car,
       data.price,
       data.userId,
-      data.companyDriverId,
+      data.companyDriverid,
     ) as { userId: number } | undefined;
 
     db.exec("COMMIT;");
@@ -258,6 +258,7 @@ export function addRoute(db: DatabaseSync, data: Route) {
     );
   } catch (error) {
     db.exec("ROLLBACK;");
+    console.error(error);
     throw new HttpError("Internal Server Error", 500);
   }
 }
@@ -276,7 +277,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
         data.passengerCount,
         data.car,
         data.price,
-        data.companyDriverId,
+        data.companyDriverid,
         id,
       ) as RouteWithId | undefined;
 
