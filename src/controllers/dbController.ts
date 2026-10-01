@@ -151,7 +151,7 @@ export function loginUser(db: DatabaseSync, data: LoginRequest) {
     }
 
     const token = jwt.sign(
-      { type: loginUser.type, id: loginUser.id },
+      { type: loginUser.type, id: loginUser.userId },
       JWT_SECRET,
       {
         algorithm: "HS256",
@@ -256,13 +256,13 @@ export function addRoute(db: DatabaseSync, data: Route) {
       data.price,
       data.userId,
       data.companyDriverId,
-    ) as { userId: number } | undefined;
+    ) as { routeId: number } | undefined;
 
     db.exec("COMMIT;");
 
     return new HttpResponse(
       "Route has been succesfully added.",
-      result?.userId,
+      result?.routeId,
     );
   } catch (error) {
     db.exec("ROLLBACK;");
@@ -356,11 +356,11 @@ export function editCompanyDriver(
       .get(data.photoURL, data.firstName, data.lastName, data.phoneNumber, id);
 
     if (!existingUser) {
-      throw new HttpError("User does not exist.", 404);
+      throw new HttpError("Company driver does not exist.", 404);
     }
 
     return new HttpResponse(
-      "User has been succesfully edited.",
+      "Company driver has been succesfully edited.",
       existingUser?.id,
     );
   } catch (e) {
