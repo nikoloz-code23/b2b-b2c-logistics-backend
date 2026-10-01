@@ -8,8 +8,11 @@ import cors from "cors";
 import db, { HttpError, HttpResponse } from "./config/database";
 import { type StatementSync } from "node:sqlite";
 import {
+  addCompanyDriver,
   addRoute,
+  deleteCompanyDriver,
   deleteRoute,
+  editCompanyDriver,
   editRoute,
   getRouteData,
   getUserData,
@@ -191,6 +194,45 @@ app.delete(
     }
   },
 );
+
+app.post("/driver", authenticateToken, (req: Request, res: Response) => {
+  try {
+    const result: HttpResponse = addCompanyDriver(db, req.body);
+    return res.status(201).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.put("/driver/:id", authenticateToken, (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const result: HttpResponse = editCompanyDriver(db, req.body, Number(id));
+    return res.status(201).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.delete("/driver/:id", authenticateToken, (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    deleteCompanyDriver(db, Number(id));
+    return res
+      .status(200)
+      .json(new HttpResponse("The route has been succesfully deleted."));
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
 
 app.listen(port, () => {
   console.log(`The server is started on http://localhost:${port}`);

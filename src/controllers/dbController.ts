@@ -22,11 +22,19 @@ export interface OverviewUserData extends BaseUserData {
   drivers: CompanyDriver[] | null;
 }
 
-export interface CompanyDriver {
-  photoUrl: string;
+export interface CompanyDriverEssential {
+  photoURL: string;
   firstName: string;
   lastName: string;
   phoneNumber: string;
+}
+
+export interface CompanyDriverData extends CompanyDriverEssential {
+  companyId: number;
+}
+
+export interface CompanyDriver extends CompanyDriverEssential {
+  id: number;
 }
 
 export interface UserData extends BaseUserData {
@@ -185,7 +193,7 @@ export function getUserData(db: DatabaseSync, id: number) {
 
     const driverArrayData = db
       .prepare(
-        "SELECT photoUrl, firstName, lastName, phoneNumber FROM companyDriver WHERE companyId = ?",
+        "SELECT id, photoUrl, firstName, lastName, phoneNumber FROM companyDriver WHERE companyId = ?",
       )
       .all(id) as unknown as CompanyDriver[];
 
@@ -301,6 +309,71 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
 export function deleteRoute(db: DatabaseSync, id: number) {
   try {
     db.prepare("DELETE FROM routes WHERE routeId = ?").run(id);
+  } catch (e) {
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function addCompanyDriver(db: DatabaseSync, data: CompanyDriverData) {
+  const insert: StatementSync = db.prepare(
+    "INSERT INTO companyDriver (photoURL, firstName, lastName, phoneNumber, companyId) VALUES (?, ?, ?, ?, ?) RETURNING id",
+  );
+
+  db.exec("BEGIN IMMEDIATE TRANSACTION;");
+
+  try {
+    const result = insert.get(
+      data.photoURL,
+      data.firstName,
+      data.lastName,
+      data.phoneNumber,
+      data.companyId,
+    ) as { id: number } | undefined;
+
+    db.exec("COMMIT;");
+
+    return new HttpResponse(
+      "Company Driver has been succesfully added.",
+      result?.id,
+    );
+  } catch (error) {
+    db.exec("ROLLBACK;");
+    console.error(error);
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function editCompanyDriver(
+  db: DatabaseSync,
+  data: CompanyDriverEssential,
+  id: number,
+) {
+  try {
+    const existingUser = db
+      .prepare(
+        "UPDATE companyDriver SET photoURL=?, firstName=?, lastName=?, phoneNumber=? WHERE id=? RETURNING id",
+      )
+      .get(data.photoURL, data.firstName, data.lastName, data.phoneNumber, id);
+
+    if (!existingUser) {
+      throw new HttpError("User does not exist.", 404);
+    }
+
+    return new HttpResponse(
+      "User has been succesfully edited.",
+      existingUser?.id,
+    );
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function deleteCompanyDriver(db: DatabaseSync, id: number) {
+  try {
+    db.prepare("DELETE FROM companyDriver WHERE id = ?").run(id);
   } catch (e) {
     throw new HttpError("Internal Server Error", 500);
   }
