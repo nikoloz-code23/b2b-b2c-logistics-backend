@@ -8,6 +8,7 @@ import cors from "cors";
 import db, { HttpError, HttpResponse } from "./config/database";
 import { type StatementSync } from "node:sqlite";
 import {
+  addRoute,
   deleteRoute,
   editRoute,
   getRouteData,
@@ -141,6 +142,17 @@ app.get("/route/:routeId", (req: Request, res: Response) => {
   try {
     const result: Route = getRouteData(db, Number(routeId));
     return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.post("/route", (req: Request, res: Response) => {
+  try {
+    const result: HttpResponse = addRoute(db, req.body);
+    return res.status(201).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
       return res.status(e.statusCode).json(e.message);
