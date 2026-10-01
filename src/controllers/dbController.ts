@@ -216,9 +216,7 @@ export function getRouteData(db: DatabaseSync, id: number) {
 
 export function deleteRoute(db: DatabaseSync, id: number) {
   try {
-    const deleteRoute = db
-      .prepare("DELETE FROM route WHERE routeId = ?")
-      .run(id);
+    db.prepare("DELETE FROM route WHERE routeId = ?").run(id);
   } catch (e) {
     throw new HttpError("Internal Server Error", 500);
   }
