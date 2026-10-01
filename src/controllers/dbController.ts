@@ -37,6 +37,17 @@ export interface User extends UserData {
   type: "company" | "driver";
 }
 
+export interface Route {
+  fromCity: string;
+  toCity: string;
+  fromCoordinate: string;
+  toCoordinate: string;
+  passengerCount: string;
+  car: string;
+  userId: number;
+  companyDriverId: number | null;
+}
+
 export function newUser(db: DatabaseSync, data: User) {
   const insert: StatementSync = db.prepare(
     "INSERT INTO users (type, photoURL, firstName, lastName, companyName, companyID, phoneNumber, email, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING userId",
@@ -178,7 +189,37 @@ export function getUserData(db: DatabaseSync, id: number) {
     if (e instanceof HttpError) {
       throw e;
     }
-    console.error("databse runtime error", e);
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function getRouteData(db: DatabaseSync, id: number) {
+  try {
+    const routeData = db
+      .prepare(
+        "SELECT fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverid FROM route WHERE routeId = ?",
+      )
+      .get(id) as Route | undefined;
+
+    if (!routeData) {
+      throw new HttpError("The route doesn't exist.", 404);
+    }
+
+    return routeData;
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function deleteRoute(db: DatabaseSync, id: number) {
+  try {
+    const deleteRoute = db
+      .prepare("DELETE FROM route WHERE routeId = ?")
+      .run(id);
+  } catch (e) {
     throw new HttpError("Internal Server Error", 500);
   }
 }
