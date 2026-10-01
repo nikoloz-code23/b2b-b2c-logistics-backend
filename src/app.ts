@@ -119,7 +119,7 @@ app.get("/overview/:userId", (req: Request, res: Response) => {
   }
 });
 
-app.post("/logout", (_: Request, res: Response) => {
+app.post("/logout", authenticateToken, (_: Request, res: Response) => {
   res.status(200).json(new HttpResponse("Logged out succesfully."));
 });
 
@@ -149,7 +149,7 @@ app.get("/route/:routeId", (req: Request, res: Response) => {
   }
 });
 
-app.post("/route", (req: Request, res: Response) => {
+app.post("/route", authenticateToken, (req: Request, res: Response) => {
   try {
     const result: HttpResponse = addRoute(db, req.body);
     return res.status(201).json(result);
