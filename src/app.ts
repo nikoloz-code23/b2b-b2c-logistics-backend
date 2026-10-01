@@ -181,7 +181,7 @@ app.get("/auth", authenticateToken, (_: Request, res: Response) => {
  *   get:
  *     summary: Get user overview data
  *     tags:
- *       - Users
+ *       - User Data
  *     parameters:
  *       - name: userId
  *         in: path
@@ -276,7 +276,7 @@ app.post("/logout", authenticateToken, (_: Request, res: Response) => {
  *   put:
  *     summary: Edit a user
  *     tags:
- *       - Users
+ *       - User Data
  *     security:
  *       - bearerAuth: []
  *     parameters:

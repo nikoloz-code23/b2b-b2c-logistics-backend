@@ -19,8 +19,8 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
       description: "User registration, login, logout, and authentication",
     },
     {
-      name: "Users",
-      description: "User profile and overview endpoints",
+      name: "User Data",
+      description: "User overview and Editing User",
     },
     {
       name: "Routes",
@@ -42,7 +42,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         required: [
           "type",
           "photoURL",
-          "companyId",
+          "idNumber",
           "phoneNumber",
           "email",
           "password",
@@ -72,7 +72,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             nullable: true,
             example: "Example Transport Ltd",
           },
-          companyId: {
+          idNumber: {
             type: "string",
             example: "COMP-001",
           },
@@ -112,7 +112,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
 
       UserUpdate: {
         type: "object",
-        required: ["photoURL", "companyId", "phoneNumber", "password"],
+        required: ["photoURL", "idNumber", "phoneNumber", "password"],
         properties: {
           photoURL: {
             type: "string",
@@ -133,7 +133,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             nullable: true,
             example: "Example Transport Ltd",
           },
-          companyId: {
+          idNumber: {
             type: "string",
             example: "COMP-001",
           },
