@@ -44,8 +44,13 @@ export interface Route {
   toCoordinate: string;
   passengerCount: string;
   car: string;
+  price: number;
   userId: number;
   companyDriverId: number | null;
+}
+
+export interface RouteWithId extends Route {
+  routeId: number;
 }
 
 export function newUser(db: DatabaseSync, data: User) {
@@ -93,25 +98,36 @@ export function newUser(db: DatabaseSync, data: User) {
 }
 
 export function updateUser(db: DatabaseSync, data: UserData, id: number) {
-  const existingUser = db
-    .prepare(
-      "UPDATE users SET photoURL=?, firstName=?, lastName=?, companyName=?, companyID=?, phoneNumber=?, password=? WHERE userId=? RETURNING userId",
-    )
-    .get(
-      data.photoURL,
-      data.firstName,
-      data.lastName,
-      data.companyName,
-      data.companyId,
-      data.phoneNumber,
-      data.password,
-      id,
-    );
+  try {
+    const existingUser = db
+      .prepare(
+        "UPDATE users SET photoURL=?, firstName=?, lastName=?, companyName=?, companyID=?, phoneNumber=?, password=? WHERE userId=? RETURNING userId",
+      )
+      .get(
+        data.photoURL,
+        data.firstName,
+        data.lastName,
+        data.companyName,
+        data.companyId,
+        data.phoneNumber,
+        data.password,
+        id,
+      );
 
-  return new HttpResponse(
-    "User has been succesfully edited.",
-    existingUser?.userId,
-  );
+    if (!existingUser) {
+      throw new HttpError("User does not exist.", 404);
+    }
+
+    return new HttpResponse(
+      "User has been succesfully edited.",
+      existingUser?.userId,
+    );
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+    throw new HttpError("Internal Server Error", 500);
+  }
 }
 
 export function loginUser(db: DatabaseSync, data: LoginRequest) {
@@ -210,6 +226,41 @@ export function getRouteData(db: DatabaseSync, id: number) {
     if (e instanceof HttpError) {
       throw e;
     }
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function editRoute(db: DatabaseSync, data: Route, id: number) {
+  try {
+    const editedRoute = db
+      .prepare(
+        "UPDATE route SET fromCity=?, toCity=?, fromCoordinate=?, toCoordinate=?, passengerCount=?, car=?, price=?, companyDriverid=? WHERE routeId = ? RETURNING routeId",
+      )
+      .get(
+        data.fromCity,
+        data.toCity,
+        data.fromCoordinate,
+        data.toCoordinate,
+        data.passengerCount,
+        data.car,
+        data.price,
+        data.companyDriverId,
+        id,
+      ) as RouteWithId | undefined;
+
+    if (!editedRoute) {
+      throw new HttpError("Route does not exist.", 404);
+    }
+
+    return new HttpResponse(
+      "Route has been succesfully edited.",
+      editedRoute?.routeId,
+    );
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+
     throw new HttpError("Internal Server Error", 500);
   }
 }
