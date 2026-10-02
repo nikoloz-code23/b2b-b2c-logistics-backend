@@ -4,23 +4,28 @@ import express, {
   Request,
   Response,
 } from "express";
-import cors from "cors";
-import db, { HttpError, HttpResponse } from "./config/database";
-import { type StatementSync } from "node:sqlite";
+
 import {
   addCompanyDriver,
-  addRoute,
-  deleteCompanyDriver,
-  deleteRoute,
   editCompanyDriver,
-  editRoute,
+  deleteCompanyDriver,
+} from "./controllers/driverController";
+import {
   getRouteData,
-  getUserData,
-  loginUser,
+  addRoute,
+  editRoute,
+  deleteRoute,
+} from "./controllers/routeController";
+import {
   newUser,
-  Route,
   updateUser,
-} from "./controllers/dbController";
+  loginUser,
+  getUserData,
+} from "./controllers/userController";
+import { Route } from "./types/route";
+
+import cors from "cors";
+import db, { HttpError, HttpResponse } from "./config/database";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env";
 
