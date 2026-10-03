@@ -1,8 +1,11 @@
-export interface CompanyDriverEssential {
+export interface CompanyDriverPreview {
   photoURL: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+}
+
+export interface CompanyDriverEssential extends CompanyDriverPreview {
+  photoURL: string;
 }
 
 export interface CompanyDriverData extends CompanyDriverEssential {

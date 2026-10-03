@@ -1,3 +1,6 @@
+import { CompanyDriverEssential } from "./driver";
+import { PreviewUser } from "./user";
+
 export interface Route {
   fromCity: string;
   toCity: string;
@@ -11,5 +14,14 @@ export interface Route {
 }
 
 export interface RouteWithId extends Route {
+  routeId: number;
+}
+
+export interface RouteUserCompanyDriverData extends Route {
+  uploadedBy: PreviewUser;
+  companyDriver: CompanyDriverEssential | null;
+}
+
+export interface RouteFullData extends RouteUserCompanyDriverData {
   routeId: number;
 }

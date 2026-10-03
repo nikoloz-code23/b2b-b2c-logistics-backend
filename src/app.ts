@@ -15,6 +15,7 @@ import {
   addRoute,
   editRoute,
   deleteRoute,
+  getAllRoutes,
 } from "./controllers/routeController";
 import {
   newUser,
@@ -317,6 +318,17 @@ app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
 
   try {
     const result: HttpResponse = updateUser(db, req.body, Number(id));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+app.get("/route", (_: Request, res: Response) => {
+  try {
+    const result: Route[] | undefined = getAllRoutes(db);
     return res.status(200).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
