@@ -1,10 +1,13 @@
 import { CompanyDriver } from "./driver";
 
-export interface BaseUserData {
+export interface PreviewUser {
   photoURL: string;
   firstName: string | null;
   lastName: string | null;
   companyName: string | null;
+}
+
+export interface BaseUserData extends PreviewUser {
   idNumber: string;
   phoneNumber: string;
   email: string;
