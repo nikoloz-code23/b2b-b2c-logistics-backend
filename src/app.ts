@@ -4,23 +4,29 @@ import express, {
   Request,
   Response,
 } from "express";
-import cors from "cors";
-import db, { HttpError, HttpResponse } from "./config/database";
-import { type StatementSync } from "node:sqlite";
+
 import {
   addCompanyDriver,
-  addRoute,
-  deleteCompanyDriver,
-  deleteRoute,
   editCompanyDriver,
-  editRoute,
+  deleteCompanyDriver,
+} from "./controllers/driverController";
+import {
   getRouteData,
-  getUserData,
-  loginUser,
+  addRoute,
+  editRoute,
+  deleteRoute,
+  getAllRoutes,
+} from "./controllers/routeController";
+import {
   newUser,
-  Route,
   updateUser,
-} from "./controllers/dbController";
+  loginUser,
+  getUserData,
+} from "./controllers/userController";
+import { Route } from "./types/route";
+
+import cors from "cors";
+import db, { HttpError, HttpResponse } from "./config/database";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env";
 
@@ -80,30 +86,34 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
  * @openapi
  * /register:
  *   post:
- *     summary: Register a new user
  *     tags:
  *       - Authentication
+ *     summary: Register a new user
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/User'
+ *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
  *       201:
- *         description: User successfully registered
+ *         description: User successfully registered.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HttpResponse'
  *       400:
- *         description: A user with this email already exists
+ *         description: A user with this email already exists.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
- *         description: Internal server error
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.post("/register", (req: Request, res: Response) => {
   try {
@@ -120,9 +130,9 @@ app.post("/register", (req: Request, res: Response) => {
  * @openapi
  * /login:
  *   post:
- *     summary: Log in a user
  *     tags:
  *       - Authentication
+ *     summary: Log in a user
  *     requestBody:
  *       required: true
  *       content:
@@ -131,17 +141,23 @@ app.post("/register", (req: Request, res: Response) => {
  *             $ref: '#/components/schemas/LoginRequest'
  *     responses:
  *       200:
- *         description: User successfully logged in
+ *         description: User successfully logged in.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/LoginResponse'
  *       400:
- *         description: Invalid email or password
+ *         description: Email or password is incorrect.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Error'
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.post("/login", (req: Request, res: Response) => {
   try {
@@ -158,18 +174,16 @@ app.post("/login", (req: Request, res: Response) => {
  * @openapi
  * /auth:
  *   get:
- *     summary: Verify the current JWT
  *     tags:
  *       - Authentication
+ *     summary: Validate the current authentication token
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Token is valid
+ *         description: The authentication token is valid.
  *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
+ *         description: Missing or invalid authentication token.
  */
 app.get("/auth", authenticateToken, (_: Request, res: Response) => {
   return res.sendStatus(200);
@@ -179,58 +193,36 @@ app.get("/auth", authenticateToken, (_: Request, res: Response) => {
  * @openapi
  * /overview/{userId}:
  *   get:
- *     summary: Get user overview data
  *     tags:
- *       - User Data
+ *       - Users
+ *     summary: Get user overview data
  *     parameters:
  *       - name: userId
  *         in: path
  *         required: true
- *         description: User ID
+ *         description: ID of the user.
  *         schema:
  *           type: integer
- *           example: 1
+ *           format: int64
  *     responses:
  *       200:
- *         description: User overview data
+ *         description: User overview data.
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 photoURL:
- *                   type: string
- *                 firstName:
- *                   type: string
- *                   nullable: true
- *                 lastName:
- *                   type: string
- *                   nullable: true
- *                 companyName:
- *                   type: string
- *                   nullable: true
- *                 companyId:
- *                   type: string
- *                 phoneNumber:
- *                   type: string
- *                 email:
- *                   type: string
- *                 drivers:
- *                   type: array
- *                   nullable: true
- *                   items:
- *                     type: object
- *                     properties:
- *                       photoUrl:
- *                         type: string
- *                       firstName:
- *                         type: string
- *                       lastName:
- *                         type: string
- *                       phoneNumber:
- *                         type: string
+ *               $ref: '#/components/schemas/OverviewUserData'
  *       404:
- *         description: User does not exist
+ *         description: The user does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.get("/overview/:userId", (req: Request, res: Response) => {
   const { userId } = req.params;
@@ -249,22 +241,20 @@ app.get("/overview/:userId", (req: Request, res: Response) => {
  * @openapi
  * /logout:
  *   post:
- *     summary: Log out the current user
  *     tags:
  *       - Authentication
+ *     summary: Log out the current user
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User successfully logged out
+ *         description: User successfully logged out.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/HttpResponse'
+ *               $ref: '#/components/schemas/HttpResponseMessage'
  *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
+ *         description: Missing or invalid authentication token.
  */
 app.post("/logout", authenticateToken, (_: Request, res: Response) => {
   res.status(200).json(new HttpResponse("Logged out succesfully."));
@@ -274,38 +264,42 @@ app.post("/logout", authenticateToken, (_: Request, res: Response) => {
  * @openapi
  * /edit/{id}:
  *   put:
- *     summary: Edit a user
  *     tags:
- *       - User Data
+ *       - Users
+ *     summary: Update user data
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: User ID
+ *         description: ID of the user to update.
  *         schema:
  *           type: integer
- *           example: 1
+ *           format: int64
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UserUpdate'
+ *             $ref: '#/components/schemas/UpdateUserRequest'
  *     responses:
  *       200:
- *         description: User successfully edited
+ *         description: User successfully updated.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HttpResponse'
- *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
  *       404:
- *         description: User does not exist
+ *         description: User does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       500:
+ *         description: Internal server error.
  */
 app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
   const { id } = req.params;
@@ -322,28 +316,172 @@ app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
 
 /**
  * @openapi
- * /route/{routeId}:
+ * /route:
  *   get:
- *     summary: Get route data
  *     tags:
  *       - Routes
+ *     summary: Get all routes
+ *     responses:
+ *       200:
+ *         description: A list of routes.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/RouteFullDataDriverPreview'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ *   post:
+ *     tags:
+ *       - Routes
+ *     summary: Add a new route
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RouteRequest'
+ *     responses:
+ *       201:
+ *         description: Route successfully added.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HttpResponse'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+app.get("/route", (_: Request, res: Response) => {
+  try {
+    const result: Route[] | undefined = getAllRoutes(db);
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json(e.message);
+    }
+  }
+});
+
+/**
+ * @openapi
+ * /route/{routeId}:
+ *   get:
+ *     tags:
+ *       - Routes
+ *     summary: Get route data by ID
  *     parameters:
  *       - name: routeId
  *         in: path
  *         required: true
- *         description: Route ID
+ *         description: ID of the route.
  *         schema:
  *           type: integer
- *           example: 1
+ *           format: int64
  *     responses:
  *       200:
- *         description: Route data
+ *         description: Route data.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Route'
+ *               $ref: '#/components/schemas/RouteFullData'
  *       404:
- *         description: Route does not exist
+ *         description: The route does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ *   put:
+ *     tags:
+ *       - Routes
+ *     summary: Edit a route
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: routeId
+ *         in: path
+ *         required: true
+ *         description: ID of the route to edit.
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RouteRequest'
+ *     responses:
+ *       200:
+ *         description: Route successfully edited.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HttpResponse'
+ *       404:
+ *         description: Route does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ *   delete:
+ *     tags:
+ *       - Routes
+ *     summary: Delete a route
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: routeId
+ *         in: path
+ *         required: true
+ *         description: ID of the route to delete.
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *     responses:
+ *       200:
+ *         description: Route successfully deleted.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HttpResponse'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.get("/route/:routeId", (req: Request, res: Response) => {
   const { routeId } = req.params;
@@ -358,33 +496,6 @@ app.get("/route/:routeId", (req: Request, res: Response) => {
   }
 });
 
-/**
- * @openapi
- * /route:
- *   post:
- *     summary: Add a route
- *     tags:
- *       - Routes
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Route'
- *     responses:
- *       201:
- *         description: Route successfully added
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/HttpResponse'
- *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
- */
 app.post("/route", authenticateToken, (req: Request, res: Response) => {
   try {
     const result: HttpResponse = addRoute(db, req.body);
@@ -396,43 +507,6 @@ app.post("/route", authenticateToken, (req: Request, res: Response) => {
   }
 });
 
-/**
- * @openapi
- * /route/{routeId}:
- *   put:
- *     summary: Edit a route
- *     tags:
- *       - Routes
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: routeId
- *         in: path
- *         required: true
- *         description: Route ID
- *         schema:
- *           type: integer
- *           example: 1
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Route'
- *     responses:
- *       200:
- *         description: Route successfully edited
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/HttpResponse'
- *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
- *       404:
- *         description: Route does not exist
- */
 app.put("/route/:routeId", authenticateToken, (req: Request, res: Response) => {
   const { routeId } = req.params;
 
@@ -446,37 +520,6 @@ app.put("/route/:routeId", authenticateToken, (req: Request, res: Response) => {
   }
 });
 
-/**
- * @openapi
- * /route/{routeId}:
- *   delete:
- *     summary: Delete a route
- *     tags:
- *       - Routes
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: routeId
- *         in: path
- *         required: true
- *         description: Route ID
- *         schema:
- *           type: integer
- *           example: 1
- *     responses:
- *       200:
- *         description: Route successfully deleted
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/HttpResponse'
- *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
- *       404:
- *         description: Route does not exist
- */
 app.delete(
   "/route/:routeId",
   authenticateToken,
@@ -500,9 +543,9 @@ app.delete(
  * @openapi
  * /driver:
  *   post:
- *     summary: Add a company driver
  *     tags:
- *       - Drivers
+ *       - Company Drivers
+ *     summary: Add a company driver
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -510,42 +553,22 @@ app.delete(
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - photoUrl
- *               - firstName
- *               - lastName
- *               - phoneNumber
- *               - companyId
- *             properties:
- *               photoUrl:
- *                 type: string
- *                 example: "https://example.com/driver.jpg"
- *               firstName:
- *                 type: string
- *                 example: "John"
- *               lastName:
- *                 type: string
- *                 example: "Driver"
- *               phoneNumber:
- *                 type: string
- *                 example: "+1234567890"
- *               companyId:
- *                 type: integer
- *                 example: 1
+ *             $ref: '#/components/schemas/CompanyDriverData'
  *     responses:
  *       201:
- *         description: Driver successfully added
+ *         description: Company driver successfully added.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HttpResponse'
  *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
+ *         description: Missing or invalid authentication token.
  *       500:
- *         description: Internal server error
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.post("/driver", authenticateToken, (req: Request, res: Response) => {
   try {
@@ -562,62 +585,76 @@ app.post("/driver", authenticateToken, (req: Request, res: Response) => {
  * @openapi
  * /driver/{id}:
  *   put:
- *     summary: Edit a company driver
  *     tags:
- *       - Drivers
+ *       - Company Drivers
+ *     summary: Edit a company driver
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: Driver ID
+ *         description: ID of the company driver.
  *         schema:
  *           type: integer
- *           example: 1
+ *           format: int64
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - photoUrl
- *               - firstName
- *               - lastName
- *               - phoneNumber
- *               - companyId
- *             properties:
- *               photoUrl:
- *                 type: string
- *                 example: "https://example.com/driver.jpg"
- *               firstName:
- *                 type: string
- *                 example: "John"
- *               lastName:
- *                 type: string
- *                 example: "Driver"
- *               phoneNumber:
- *                 type: string
- *                 example: "+1234567890"
- *               companyId:
- *                 type: integer
- *                 example: 1
+ *             $ref: '#/components/schemas/CompanyDriverUpdateRequest'
  *     responses:
  *       200:
- *         description: Driver successfully edited
+ *         description: Company driver successfully edited.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HttpResponse'
+ *       404:
+ *         description: Company driver does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ *   delete:
+ *     tags:
+ *       - Company Drivers
+ *     summary: Delete a company driver
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID of the company driver.
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *     responses:
+ *       200:
+ *         description: Company driver successfully deleted.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/HttpResponse'
  *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
- *       404:
- *         description: Driver does not exist
+ *         description: Missing or invalid authentication token.
  *       500:
- *         description: Internal server error
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.put("/driver/:id", authenticateToken, (req: Request, res: Response) => {
   const { id } = req.params;
@@ -632,39 +669,6 @@ app.put("/driver/:id", authenticateToken, (req: Request, res: Response) => {
   }
 });
 
-/**
- * @openapi
- * /driver/{id}:
- *   delete:
- *     summary: Delete a company driver
- *     tags:
- *       - Drivers
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: Driver ID
- *         schema:
- *           type: integer
- *           example: 1
- *     responses:
- *       200:
- *         description: Driver successfully deleted
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/HttpResponse'
- *       401:
- *         description: No token was provided
- *       403:
- *         description: Token is invalid or expired
- *       404:
- *         description: Driver does not exist
- *       500:
- *         description: Internal server error
- */
 app.delete("/driver/:id", authenticateToken, (req: Request, res: Response) => {
   const { id } = req.params;
 
