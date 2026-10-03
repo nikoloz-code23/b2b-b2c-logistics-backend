@@ -1,4 +1,4 @@
-import { CompanyDriverEssential } from "./driver";
+import { CompanyDriverEssential, CompanyDriverPreview } from "./driver";
 import { PreviewUser } from "./user";
 
 export interface Route {
@@ -16,6 +16,19 @@ export interface Route {
 export interface RouteWithId extends Route {
   routeId: number;
 }
+
+// ----
+
+export interface RouteUserCompanyDriverDataPreview extends RouteWithId {
+  uploadedBy: PreviewUser;
+  companyDriver: CompanyDriverPreview | null;
+}
+
+export interface RouteFullDataDriverPreview extends RouteUserCompanyDriverDataPreview {
+  routeId: number;
+}
+
+// ----
 
 export interface RouteUserCompanyDriverData extends Route {
   uploadedBy: PreviewUser;

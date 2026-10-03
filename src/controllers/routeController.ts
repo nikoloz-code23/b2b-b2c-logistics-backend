@@ -1,7 +1,12 @@
 import { DatabaseSync, StatementSync } from "node:sqlite";
 
 import { HttpError, HttpResponse } from "../config/database";
-import { Route, RouteFullData, RouteWithId } from "../types/route";
+import {
+  Route,
+  RouteFullData,
+  RouteFullDataDriverPreview,
+  RouteWithId,
+} from "../types/route";
 import { PreviewUser } from "../types/user";
 import { CompanyDriverPreview } from "../types/driver";
 
@@ -11,10 +16,10 @@ export function getAllRoutes(db: DatabaseSync) {
   try {
     const routeArray = db
       .prepare("SELECT * FROM routes")
-      .all() as unknown as RouteFullData[];
+      .all() as unknown as RouteFullDataDriverPreview[];
     if (!routeArray) return [];
 
-    const routeData: RouteFullData[] = [];
+    const routeData: RouteFullDataDriverPreview[] = [];
     for (let route of routeArray) {
       const userData = db
         .prepare(
