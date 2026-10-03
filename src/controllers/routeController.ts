@@ -1,21 +1,75 @@
 import { DatabaseSync, StatementSync } from "node:sqlite";
 
 import { HttpError, HttpResponse } from "../config/database";
-import { Route, RouteWithId } from "../types/route";
+import { Route, RouteFullData, RouteWithId } from "../types/route";
+import { PreviewUser } from "../types/user";
+import { CompanyDriverPreview } from "../types/driver";
+
+export function getAllRoutes(db: DatabaseSync) {
+  // This is NOT optimized and honestly can be odne better, but I am sick.
+  // For this project, sadly it will do.
+  try {
+    const routeArray = db
+      .prepare("SELECT * FROM routes")
+      .all() as unknown as RouteFullData[];
+    if (!routeArray) return [];
+
+    const routeData: RouteFullData[] = [];
+    for (let route of routeArray) {
+      const userData = db
+        .prepare(
+          "SELECT photoURL, firstName, lastName, companyName FROM users WHERE userId=?",
+        )
+        .get(route.userId) as PreviewUser | undefined;
+      if (!userData) continue;
+
+      const companyDriverData = db
+        .prepare(
+          "SELECT photoURL, firstName, lastName FROM companyDriver WHERE id=?",
+        )
+        .get(route.companyDriverId) as CompanyDriverPreview | undefined;
+
+      routeData.push({
+        ...route,
+        uploadedBy: userData,
+        companyDriver: companyDriverData ? companyDriverData : null,
+      });
+    }
+
+    return routeData;
+  } catch (e) {
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
 
 export function getRouteData(db: DatabaseSync, id: number) {
   try {
     const routeData = db
-      .prepare(
-        "SELECT fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, car, price, userId, companyDriverId FROM routes WHERE routeId = ?",
-      )
-      .get(id) as Route | undefined;
+      .prepare("SELECT * FROM routes WHERE routeId = ?")
+      .get(id) as RouteFullData | undefined;
 
     if (!routeData) {
       throw new HttpError("The route doesn't exist.", 404);
     }
 
-    return routeData;
+    const userData = db
+      .prepare(
+        "SELECT photoURL, firstName, lastName, companyName FROM users WHERE userId=?",
+      )
+      .get(routeData.userId) as PreviewUser | undefined;
+
+    const companyDriverData = db
+      .prepare(
+        "SELECT photoURL, firstName, lastName FROM companyDriver WHERE id=?",
+      )
+      .get(routeData.companyDriverId) as CompanyDriverPreview | undefined;
+
+    const returnData = {
+      ...routeData,
+      uploadedBy: userData,
+      companyDriver: companyDriverData ? companyDriverData : null,
+    } as unknown as RouteFullData;
+    return returnData;
   } catch (e) {
     if (e instanceof HttpError) {
       throw e;
