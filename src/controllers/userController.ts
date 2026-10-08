@@ -104,16 +104,19 @@ export function loginUser(db: DatabaseSync, data: LoginRequest) {
       },
     );
 
-    return new LoginResponse("User has succesfully logged in.", token, {
-      id: loginUser.userId,
-      type: loginUser.type,
-      photoURL: loginUser.photoURL,
-      firstName: loginUser.firstName,
-      lastName: loginUser.lastName,
-      companyName: loginUser.companyName,
-      idNumber: loginUser.idNumber,
-      phoneNumber: loginUser.phoneNumber,
-      email: loginUser.email,
+    return new LoginResponse("User has succesfully logged in.", {
+      token: token,
+      user: {
+        id: loginUser.userId,
+        type: loginUser.type,
+        photoURL: loginUser.photoURL,
+        firstName: loginUser.firstName,
+        lastName: loginUser.lastName,
+        companyName: loginUser.companyName,
+        idNumber: loginUser.idNumber,
+        phoneNumber: loginUser.phoneNumber,
+        email: loginUser.email,
+      },
     });
   } catch (e) {
     if (e instanceof HttpError) {

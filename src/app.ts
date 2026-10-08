@@ -26,7 +26,7 @@ import {
 import { Route } from "./types/route";
 
 import cors from "cors";
-import db, { HttpError, HttpResponse } from "./config/database";
+import db, { HttpError, HttpResponse, LoginResponse } from "./config/database";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env";
 
@@ -161,8 +161,18 @@ app.post("/register", (req: Request, res: Response) => {
  */
 app.post("/login", (req: Request, res: Response) => {
   try {
-    const result: HttpResponse = loginUser(db, req.body);
-    return res.status(200).json(result);
+    const result: LoginResponse = loginUser(db, req.body);
+
+    res.cookie("token", result.payload.token, {
+      httpOnly: true,
+    });
+
+    const data = {
+      message: result.message,
+      user: result.payload.user,
+    };
+
+    return res.status(200).json(data);
   } catch (e) {
     if (e instanceof HttpError) {
       return res.status(e.statusCode).json(e.message);

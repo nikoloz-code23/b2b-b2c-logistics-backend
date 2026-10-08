@@ -23,13 +23,17 @@ export class HttpResponse {
   }
 }
 
+export interface LoginPayload {
+  token: string;
+  user?: any;
+}
+
 export class LoginResponse {
-  constructor(message: string, token: string, user?: any) {
-    return {
-      message,
-      token,
-      user,
-    };
+  message: string;
+  payload: LoginPayload;
+  constructor(message: string, _payload: LoginPayload) {
+    this.payload = _payload;
+    this.message = message;
   }
 }
 

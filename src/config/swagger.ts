@@ -78,16 +78,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
 
       LoginResponse: {
         type: "object",
-        required: ["message", "token", "user"],
+        required: ["message", "user"],
         properties: {
           message: {
             type: "string",
             example: "User has succesfully logged in.",
-          },
-          token: {
-            type: "string",
-            description: "JWT authentication token.",
-            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example-token",
           },
           user: {
             $ref: "#/components/schemas/LoginUser",
