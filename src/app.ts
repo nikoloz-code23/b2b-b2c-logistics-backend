@@ -37,14 +37,15 @@ const app: Express = express();
 const port: number = 3000;
 
 const corsOptions = {
-	origin: "*",
-	methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-	preflightContinue: false,
-	optionsSuccessStatus: 204,
+  origin: "http://localhost:5173/",
+  credentials: true,
+  // methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  // preflightContinue: false,
+  // optionsSuccessStatus: 204,
 };
 
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 /*
 app.use((_: Request, res: Response, next: NextFunction) => {
   res.set({
