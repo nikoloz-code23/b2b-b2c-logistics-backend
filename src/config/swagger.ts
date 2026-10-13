@@ -42,9 +42,15 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
 
     schemas: {
       ErrorResponse: {
-        type: "string",
+        type: "object",
         description: "Error messages are returned directly as JSON strings.",
-        example: "The route doesn't exist.",
+        required: ["message"],
+        properties: {
+          message: {
+            type: "string",
+            example: "The route doesn't exist.",
+          },
+        },
       },
 
       HttpResponse: {
@@ -78,16 +84,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
 
       LoginResponse: {
         type: "object",
-        required: ["message", "token", "user"],
+        required: ["message", "user"],
         properties: {
           message: {
             type: "string",
             example: "User has succesfully logged in.",
-          },
-          token: {
-            type: "string",
-            description: "JWT authentication token.",
-            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example-token",
           },
           user: {
             $ref: "#/components/schemas/LoginUser",
@@ -565,8 +566,9 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             example: "42.3601,-71.0589",
           },
           passengerCount: {
-            type: "string",
-            example: "3",
+            type: "number",
+            format: "int64",
+            example: 3,
           },
           car: {
             type: "string",
@@ -623,8 +625,9 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             example: "42.3601,-71.0589",
           },
           passengerCount: {
-            type: "string",
-            example: "3",
+            type: "number",
+            format: "int64",
+            example: 3,
           },
           car: {
             type: "string",
