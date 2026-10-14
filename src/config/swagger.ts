@@ -543,6 +543,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           "fromCoordinate",
           "toCoordinate",
           "passengerCount",
+          "departureTime",
           "car",
           "price",
           "userId",
@@ -569,6 +570,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             type: "number",
             format: "int64",
             example: 3,
+          },
+          departureTime: {
+            type: "string",
+            description: "Departure time in HH:mm format.",
+            example: "11:00",
           },
           car: {
             type: "string",
@@ -602,6 +608,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           "fromCoordinate",
           "toCoordinate",
           "passengerCount",
+          "departureTime",
           "car",
           "price",
           "userId",
@@ -628,6 +635,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             type: "number",
             format: "int64",
             example: 3,
+          },
+          departureTime: {
+            type: "string",
+            description: "Departure time in HH:mm format.",
+            example: "11:00",
           },
           car: {
             type: "string",
