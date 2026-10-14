@@ -210,20 +210,51 @@ app.get("/auth", authenticateToken, (_: Request, res: Response) => {
   return res.sendStatus(200);
 });
 
+/**
+ * @openapi
+ * /auth/me:
+ *   get:
+ *     tags:
+ *       - Authentication
+ *     summary: Validate token and return user data.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: The authentication token is valid, have data.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/GetMeResponse'
+ *       401:
+ *         description: Missing/invalid authentication token.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.get("/auth/me", authenticateToken, (req: Request, res: Response) => {
   try {
     // The user ID is safely extracted from the token
     const userId = req.user?.id;
     if (userId === undefined) {
-      return res
-        .status(401)
-        .json(new HttpResponse("Can't find the user with this ID."));
+      throw new HttpError("Can't find the user with that ID!", 400);
     }
 
     const user = getUserData(db, userId);
     return res.status(200).json(new GetMeResponse("User confirmed", user));
-  } catch (error) {
-    return res.status(500).json(new HttpResponse("Server error"));
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+    // Fallback fallback for unhandled exceptions to ensure a response is always sent
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 

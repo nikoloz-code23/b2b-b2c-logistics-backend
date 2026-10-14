@@ -96,6 +96,20 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
         },
       },
 
+      GetMeResponse: {
+        type: "object",
+        required: ["message", "user"],
+        properties: {
+          message: {
+            type: "string",
+            example: "User has succesfully logged in.",
+          },
+          user: {
+            $ref: "#/components/schemas/LoginUser",
+          },
+        },
+      },
+
       LoginUser: {
         type: "object",
         required: [
