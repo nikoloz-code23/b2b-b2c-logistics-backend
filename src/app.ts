@@ -1,37 +1,43 @@
 import express, {
-	type Express,
-	NextFunction,
-	Request,
-	Response,
+  type Express,
+  NextFunction,
+  Request,
+  Response,
 } from "express";
 
 import {
-	addCompanyDriver,
-	editCompanyDriver,
-	deleteCompanyDriver,
+  addCompanyDriver,
+  editCompanyDriver,
+  deleteCompanyDriver,
 } from "./controllers/driverController";
 import {
-	getRouteData,
-	addRoute,
-	editRoute,
-	deleteRoute,
-	getAllRoutes,
+  getRouteData,
+  addRoute,
+  editRoute,
+  deleteRoute,
+  getAllRoutes,
 } from "./controllers/routeController";
 import {
-	newUser,
-	updateUser,
-	loginUser,
-	getUserData,
+  newUser,
+  updateUser,
+  loginUser,
+  getUserData,
 } from "./controllers/userController";
 import { Route } from "./types/route";
 
 import cors from "cors";
-import db, { HttpError, HttpResponse, LoginResponse } from "./config/database";
+import db, {
+  GetMeResponse,
+  HttpError,
+  HttpResponse,
+  LoginResponse,
+} from "./config/database";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../env";
 
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger";
+import { JwtPayload } from "./express";
 
 const app: Express = express();
 const port: number = 3000;
@@ -63,24 +69,28 @@ app.use((_: Request, res: Response, next: NextFunction) => {
 */
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-	const authHeader: string | undefined = req.headers["authorization"];
-	const token: string | undefined = authHeader && authHeader.split(" ")[1];
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-	if (!token) {
-		return res
-			.status(401)
-			.json(new HttpResponse("Access denied. No token provided."));
-	}
+  if (!token) {
+    return res
+      .status(401)
+      .json(new HttpResponse("Access denied. No token provided."));
+  }
 
-	jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }, (err) => {
-		if (err) {
-			return res
-				.status(403)
-				.json(new HttpResponse("Invalid or experied token."));
-		}
+  // Pass 'decoded' into the callback function
+  jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] }, (err, decoded) => {
+    if (err) {
+      return res
+        .status(403)
+        .json(new HttpResponse("Invalid or expired token."));
+    }
 
-		next();
-	});
+    // Attach the decoded token payload (containing your user id) to the request object
+    req.user = decoded as JwtPayload;
+
+    next();
+  });
 };
 
 /**
@@ -117,14 +127,14 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.post("/register", (req: Request, res: Response) => {
-	try {
-		const result: HttpResponse = newUser(db, req.body);
-		return res.status(201).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: HttpResponse = newUser(db, req.body);
+    return res.status(201).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 /**
@@ -161,24 +171,24 @@ app.post("/register", (req: Request, res: Response) => {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.post("/login", (req: Request, res: Response) => {
-	try {
-		const result: LoginResponse = loginUser(db, req.body);
+  try {
+    const result: LoginResponse = loginUser(db, req.body);
 
-		res.cookie("token", result.payload.token, {
-			httpOnly: true,
-		});
+    res.cookie("token", result.payload.token, {
+      httpOnly: true,
+    });
 
-		const data = {
-			message: result.message,
-			user: result.payload.user,
-		};
+    const data = {
+      message: result.message,
+      user: result.payload.user,
+    };
 
-		return res.status(200).json(data);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+    return res.status(200).json(data);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 /**
@@ -197,7 +207,24 @@ app.post("/login", (req: Request, res: Response) => {
  *         description: Missing or invalid authentication token.
  */
 app.get("/auth", authenticateToken, (_: Request, res: Response) => {
-	return res.sendStatus(200);
+  return res.sendStatus(200);
+});
+
+app.get("/auth/me", authenticateToken, (req: Request, res: Response) => {
+  try {
+    // The user ID is safely extracted from the token
+    const userId = req.user?.id;
+    if (userId === undefined) {
+      return res
+        .status(401)
+        .json(new HttpResponse("Can't find the user with this ID."));
+    }
+
+    const user = getUserData(db, userId);
+    return res.status(200).json(new GetMeResponse("User confirmed", user));
+  } catch (error) {
+    return res.status(500).json(new HttpResponse("Server error"));
+  }
 });
 
 /**
@@ -236,16 +263,16 @@ app.get("/auth", authenticateToken, (_: Request, res: Response) => {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.get("/overview/:userId", (req: Request, res: Response) => {
-	const { userId } = req.params;
+  const { userId } = req.params;
 
-	try {
-		const result = getUserData(db, Number(userId));
-		return res.status(200).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result = getUserData(db, Number(userId));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 /**
@@ -268,7 +295,7 @@ app.get("/overview/:userId", (req: Request, res: Response) => {
  *         description: Missing or invalid authentication token.
  */
 app.post("/logout", authenticateToken, (_: Request, res: Response) => {
-	res.status(200).json(new HttpResponse("Logged out succesfully."));
+  res.status(200).json(new HttpResponse("Logged out succesfully."));
 });
 
 /**
@@ -313,16 +340,16 @@ app.post("/logout", authenticateToken, (_: Request, res: Response) => {
  *         description: Internal server error.
  */
 app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
-	const { id } = req.params;
+  const { id } = req.params;
 
-	try {
-		const result: HttpResponse = updateUser(db, req.body, Number(id));
-		return res.status(200).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: HttpResponse = updateUser(db, req.body, Number(id));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 /**
@@ -377,14 +404,14 @@ app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.get("/route", (_: Request, res: Response) => {
-	try {
-		const result: Route[] | undefined = getAllRoutes(db);
-		return res.status(200).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: Route[] | undefined = getAllRoutes(db);
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 /**
@@ -495,59 +522,59 @@ app.get("/route", (_: Request, res: Response) => {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.get("/route/:routeId", (req: Request, res: Response) => {
-	const { routeId } = req.params;
+  const { routeId } = req.params;
 
-	try {
-		const result: Route = getRouteData(db, Number(routeId));
-		return res.status(200).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: Route = getRouteData(db, Number(routeId));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 app.post("/route", authenticateToken, (req: Request, res: Response) => {
-	try {
-		const result: HttpResponse = addRoute(db, req.body);
-		return res.status(201).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: HttpResponse = addRoute(db, req.body);
+    return res.status(201).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 app.put("/route/:routeId", authenticateToken, (req: Request, res: Response) => {
-	const { routeId } = req.params;
+  const { routeId } = req.params;
 
-	try {
-		const result: HttpResponse = editRoute(db, req.body, Number(routeId));
-		return res.status(200).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: HttpResponse = editRoute(db, req.body, Number(routeId));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 app.delete(
-	"/route/:routeId",
-	authenticateToken,
-	(req: Request, res: Response) => {
-		const { routeId } = req.params;
+  "/route/:routeId",
+  authenticateToken,
+  (req: Request, res: Response) => {
+    const { routeId } = req.params;
 
-		try {
-			deleteRoute(db, Number(routeId));
-			return res
-				.status(200)
-				.json(new HttpResponse("The route has been succesfully deleted."));
-		} catch (e) {
-			if (e instanceof HttpError) {
-				return res.status(e.statusCode).json({ message: e.message });
-			}
-		}
-	},
+    try {
+      deleteRoute(db, Number(routeId));
+      return res
+        .status(200)
+        .json(new HttpResponse("The route has been succesfully deleted."));
+    } catch (e) {
+      if (e instanceof HttpError) {
+        return res.status(e.statusCode).json({ message: e.message });
+      }
+    }
+  },
 );
 
 /**
@@ -582,14 +609,14 @@ app.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.post("/driver", authenticateToken, (req: Request, res: Response) => {
-	try {
-		const result: HttpResponse = addCompanyDriver(db, req.body);
-		return res.status(201).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: HttpResponse = addCompanyDriver(db, req.body);
+    return res.status(201).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 /**
@@ -668,48 +695,48 @@ app.post("/driver", authenticateToken, (req: Request, res: Response) => {
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.put("/driver/:id", authenticateToken, (req: Request, res: Response) => {
-	const { id } = req.params;
+  const { id } = req.params;
 
-	try {
-		const result: HttpResponse = editCompanyDriver(db, req.body, Number(id));
-		return res.status(200).json(result);
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    const result: HttpResponse = editCompanyDriver(db, req.body, Number(id));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 app.delete("/driver/:id", authenticateToken, (req: Request, res: Response) => {
-	const { id } = req.params;
+  const { id } = req.params;
 
-	try {
-		deleteCompanyDriver(db, Number(id));
-		return res
-			.status(200)
-			.json(new HttpResponse("The driver has been succesfully deleted."));
-	} catch (e) {
-		if (e instanceof HttpError) {
-			return res.status(e.statusCode).json({ message: e.message });
-		}
-	}
+  try {
+    deleteCompanyDriver(db, Number(id));
+    return res
+      .status(200)
+      .json(new HttpResponse("The driver has been succesfully deleted."));
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
 });
 
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const server = app.listen(port, () => {
-	console.log(`The server is started on http://localhost:${port}`);
-	console.log(`Swagger docs are available at http://localhost:${port}/docs`);
+  console.log(`The server is started on http://localhost:${port}`);
+  console.log(`Swagger docs are available at http://localhost:${port}/docs`);
 });
 
 server.on("error", (error) => {
-	console.error("Server error:", error);
+  console.error("Server error:", error);
 });
 
 process.on("uncaughtException", (error) => {
-	console.error("Uncaught exception:", error);
+  console.error("Uncaught exception:", error);
 });
 
 process.on("unhandledRejection", (error) => {
-	console.error("Unhandled rejection:", error);
+  console.error("Unhandled rejection:", error);
 });
