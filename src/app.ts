@@ -20,8 +20,9 @@ import {
 import {
   newUser,
   updateUser,
-  loginUser,
+  user,
   getUserData,
+  getUserDataWithId,
 } from "./controllers/userController";
 import { Route } from "./types/route";
 
@@ -39,6 +40,8 @@ import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger";
 import { JwtPayload } from "./express";
 
+import cookieParser from "cookie-parser";
+
 const app: Express = express();
 const port: number = 3000;
 
@@ -52,6 +55,7 @@ const corsOptions = {
 
 app.use(express.json());
 app.use(cors(corsOptions));
+app.use(cookieParser()); // 👈 This parses incoming cookies onto req.cookies
 /*
 app.use((_: Request, res: Response, next: NextFunction) => {
   res.set({
@@ -69,9 +73,17 @@ app.use((_: Request, res: Response, next: NextFunction) => {
 */
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  // 1. Try to get the token from HttpOnly cookies first
+  // Change "token" to the exact key name you used when calling res.cookie('name', ...)
+  let token = req.cookies?.token;
 
+  // 2. Fallback to Authorization Header (optional, in case you support both)
+  if (!token) {
+    const authHeader = req.headers["authorization"];
+    token = authHeader && authHeader.split(" ")[1];
+  }
+
+  // 3. If neither contains a token, deny access
   if (!token) {
     return res
       .status(401)
@@ -86,9 +98,8 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
         .json(new HttpResponse("Invalid or expired token."));
     }
 
-    // Attach the decoded token payload (containing your user id) to the request object
+    // Attach the decoded token payload to the request object
     req.user = decoded as JwtPayload;
-
     next();
   });
 };
@@ -172,7 +183,7 @@ app.post("/register", (req: Request, res: Response) => {
  */
 app.post("/login", (req: Request, res: Response) => {
   try {
-    const result: LoginResponse = loginUser(db, req.body);
+    const result: LoginResponse = user(db, req.body);
 
     res.cookie("token", result.payload.token, {
       httpOnly: true,
@@ -247,8 +258,8 @@ app.get("/auth/me", authenticateToken, (req: Request, res: Response) => {
       throw new HttpError("Can't find the user with that ID!", 400);
     }
 
-    const user = getUserData(db, userId);
-    return res.status(200).json(new GetMeResponse("User confirmed", user));
+    const result = getUserDataWithId(db, userId);
+    return res.status(200).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
       return res.status(e.statusCode).json({ message: e.message });

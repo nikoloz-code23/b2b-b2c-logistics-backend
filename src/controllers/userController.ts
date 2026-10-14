@@ -1,6 +1,11 @@
 import { DatabaseSync, StatementSync } from "node:sqlite";
 
-import { HttpError, HttpResponse, LoginResponse } from "../config/database";
+import {
+  GetMeResponse,
+  HttpError,
+  HttpResponse,
+  LoginResponse,
+} from "../config/database";
 import { User, UserData, LoginRequest, OverviewUserData } from "../types/user";
 import { CompanyDriver } from "../types/driver";
 import { JWT_SECRET } from "../../env";
@@ -83,7 +88,7 @@ export function updateUser(db: DatabaseSync, data: UserData, id: number) {
   }
 }
 
-export function loginUser(db: DatabaseSync, data: LoginRequest) {
+export function user(db: DatabaseSync, data: LoginRequest) {
   try {
     const loginUser = db
       .prepare(
@@ -161,6 +166,38 @@ export function getUserData(db: DatabaseSync, id: number) {
     if (e instanceof HttpError) {
       throw e;
     }
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
+export function getUserDataWithId(db: DatabaseSync, id: number) {
+  try {
+    const user = db
+      .prepare(
+        "SELECT userId, type, photoURL, firstName, lastName, companyName, idNumber, phoneNumber, email FROM users WHERE userId=?",
+      )
+      .get(id);
+
+    if (!user) {
+      throw new HttpError("Email or password is wrong!", 400);
+    }
+
+    return new GetMeResponse("User confirmed", {
+      id: user.userId,
+      type: user.type,
+      photoURL: user.photoURL,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      companyName: user.companyName,
+      idNumber: user.idNumber,
+      phoneNumber: user.phoneNumber,
+      email: user.email,
+    });
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+
     throw new HttpError("Internal Server Error", 500);
   }
 }
