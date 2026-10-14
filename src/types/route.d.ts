@@ -8,6 +8,7 @@ export interface Route {
 	toCoordinate: string;
 	passengerCount: number;
 	departureTime: string;
+	departureDate: string;
 	car: string;
 	price: number;
 	userId: number;
