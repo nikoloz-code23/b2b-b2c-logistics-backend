@@ -606,6 +606,13 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             format: "double",
             example: 150.5,
           },
+          additionalInfo: {
+            type: "string",
+            nullable: true,
+            description:
+              "Optional additional information about the route. Can contain a string or null.",
+            example: "Air conditioning, Wi-Fi on board, one short rest stop on the way.",
+          },
           userId: {
             type: "integer",
             format: "int64",
@@ -677,6 +684,13 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             type: "number",
             format: "double",
             example: 150.5,
+          },
+          additionalInfo: {
+            type: "string",
+            nullable: true,
+            description:
+              "Optional additional information about the route. Stored as null when omitted.",
+            example: "Air conditioning, Wi-Fi on board, one short rest stop on the way.",
           },
           userId: {
             type: "integer",

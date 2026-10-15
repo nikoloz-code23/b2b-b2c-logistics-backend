@@ -11,6 +11,7 @@ export interface Route {
 	departureDate: string;
 	car: string;
 	price: number;
+	additionalInfo?: string | null;
 	userId: number;
 	companyDriverId: number | null;
 }
