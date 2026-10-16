@@ -85,7 +85,7 @@ export function getRouteData(db: DatabaseSync, id: number) {
 
 export function addRoute(db: DatabaseSync, data: Route) {
   const insert: StatementSync = db.prepare(
-    "INSERT INTO routes (fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, departureTime, departureDate, car, price, additionalInfo, userId, companyDriverId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING routeId",
+    "INSERT INTO routes (fromCity, toCity, fromCoordinate, toCoordinate, passengerCount, availableSeats, departureTime, departureDate, car, price, additionalInfo, userId, companyDriverId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING routeId",
   );
 
   db.exec("BEGIN IMMEDIATE TRANSACTION;");
@@ -97,6 +97,7 @@ export function addRoute(db: DatabaseSync, data: Route) {
       data.fromCoordinate,
       data.toCoordinate,
       data.passengerCount,
+      data.availableSeats,
       data.departureTime,
       data.departureDate ?? "15/10/2026",
       data.car,
@@ -123,7 +124,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
   try {
     const editedRoute = db
       .prepare(
-        "UPDATE routes SET fromCity=?, toCity=?, fromCoordinate=?, toCoordinate=?, passengerCount=?, departureTime=?, departureDate=?, car=?, price=?, additionalInfo=?, companyDriverId=? WHERE routeId = ? RETURNING routeId",
+        "UPDATE routes SET fromCity=?, toCity=?, fromCoordinate=?, toCoordinate=?, passengerCount=?, availableSeats=?, departureTime=?, departureDate=?, car=?, price=?, additionalInfo=?, companyDriverId=? WHERE routeId = ? RETURNING routeId",
       )
       .get(
         data.fromCity,
@@ -131,6 +132,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
         data.fromCoordinate,
         data.toCoordinate,
         data.passengerCount,
+        data.availableSeats,
         data.departureTime,
         data.departureDate ?? "15/10/2026",
         data.car,

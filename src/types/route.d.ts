@@ -2,43 +2,43 @@ import { CompanyDriverEssential, CompanyDriverPreview } from "./driver";
 import { PreviewUser } from "./user";
 
 export interface Route {
-	fromCity: string;
-	toCity: string;
-	fromCoordinate: string;
-	toCoordinate: string;
-	passengerCount: number;
-	departureTime: string;
-	departureDate: string;
-	car: string;
-	price: number;
-	additionalInfo?: string | null;
-	userId: number;
-	companyDriverId: number | null;
+  fromCity: string;
+  toCity: string;
+  fromCoordinate: string;
+  toCoordinate: string;
+  passengerCount: number;
+  availableSeats: number;
+  departureTime: string;
+  departureDate: string;
+  car: string;
+  price: number;
+  additionalInfo?: string | null;
+  userId: number;
+  companyDriverId: number | null;
 }
 
 export interface RouteWithId extends Route {
-	routeId: number;
+  routeId: number;
 }
 
 // ----
 
 export interface RouteUserCompanyDriverDataPreview extends RouteWithId {
-	uploadedBy: PreviewUser;
-	companyDriver: CompanyDriverPreview | null;
+  uploadedBy: PreviewUser;
+  companyDriver: CompanyDriverPreview | null;
 }
 
-export interface RouteFullDataDriverPreview
-	extends RouteUserCompanyDriverDataPreview {
-	routeId: number;
+export interface RouteFullDataDriverPreview extends RouteUserCompanyDriverDataPreview {
+  routeId: number;
 }
 
 // ----
 
 export interface RouteUserCompanyDriverData extends Route {
-	uploadedBy: PreviewUser;
-	companyDriver: CompanyDriverEssential | null;
+  uploadedBy: PreviewUser;
+  companyDriver: CompanyDriverEssential | null;
 }
 
 export interface RouteFullData extends RouteUserCompanyDriverData {
-	routeId: number;
+  routeId: number;
 }
