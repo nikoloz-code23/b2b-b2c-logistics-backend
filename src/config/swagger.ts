@@ -177,6 +177,10 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             type: "string",
             example: "https://example.com/profile.jpg",
           },
+          phoneNumber: {
+            type: "string",
+            example: "+1234567890",
+          },
           firstName: {
             type: "string",
             nullable: true,
