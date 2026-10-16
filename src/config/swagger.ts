@@ -557,6 +557,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           "fromCoordinate",
           "toCoordinate",
           "passengerCount",
+          "availableSeats",
           "departureTime",
           "departureDate",
           "car",
@@ -586,6 +587,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             format: "int64",
             example: 3,
           },
+          availableSeats: {
+            type: "number",
+            format: "int64",
+            example: 2,
+          },
           departureTime: {
             type: "string",
             description: "Departure time in HH:mm format.",
@@ -611,7 +617,8 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             nullable: true,
             description:
               "Optional additional information about the route. Can contain a string or null.",
-            example: "Air conditioning, Wi-Fi on board, one short rest stop on the way.",
+            example:
+              "Air conditioning, Wi-Fi on board, one short rest stop on the way.",
           },
           userId: {
             type: "integer",
@@ -636,6 +643,7 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           "fromCoordinate",
           "toCoordinate",
           "passengerCount",
+          "availableSeats",
           "departureTime",
           "car",
           "price",
@@ -664,6 +672,11 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             format: "int64",
             example: 3,
           },
+          availableSeats: {
+            type: "number",
+            format: "int64",
+            example: 2,
+          },
           departureTime: {
             type: "string",
             description: "Departure time in HH:mm format.",
@@ -690,7 +703,8 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
             nullable: true,
             description:
               "Optional additional information about the route. Stored as null when omitted.",
-            example: "Air conditioning, Wi-Fi on board, one short rest stop on the way.",
+            example:
+              "Air conditioning, Wi-Fi on board, one short rest stop on the way.",
           },
           userId: {
             type: "integer",
