@@ -23,7 +23,7 @@ export function getAllRoutes(db: DatabaseSync) {
     for (let route of routeArray) {
       const userData = db
         .prepare(
-          "SELECT photoURL, firstName, lastName, companyName FROM users WHERE userId=?",
+          "SELECT photoURL, phoneNumber, firstName, lastName, companyName FROM users WHERE userId=?",
         )
         .get(route.userId) as PreviewUser | undefined;
       if (!userData) continue;
@@ -59,7 +59,7 @@ export function getRouteData(db: DatabaseSync, id: number) {
 
     const userData = db
       .prepare(
-        "SELECT photoURL, firstName, lastName, companyName FROM users WHERE userId=?",
+        "SELECT photoURL, phoneNumber, firstName, lastName, companyName FROM users WHERE userId=?",
       )
       .get(routeData.userId) as PreviewUser | undefined;
 

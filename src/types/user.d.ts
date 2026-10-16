@@ -2,6 +2,7 @@ import { CompanyDriver } from "./driver";
 
 export interface PreviewUser {
   photoURL: string;
+  phoneNumber: string;
   firstName: string | null;
   lastName: string | null;
   companyName: string | null;
@@ -9,7 +10,6 @@ export interface PreviewUser {
 
 export interface BaseUserData extends PreviewUser {
   idNumber: string;
-  phoneNumber: string;
   email: string;
 }
 
