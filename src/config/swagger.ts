@@ -799,6 +799,18 @@ const swaggerDefinition: swaggerJSDoc.OAS3Definition = {
           },
         ],
       },
+
+      SeatInterface: {
+        type: "object",
+        properties: {
+          changeSeat: {
+            type: "integer",
+            format: "int64",
+            description: "Change this according to how many seats are left.",
+            example: 2,
+          },
+        },
+      },
     },
   },
 };

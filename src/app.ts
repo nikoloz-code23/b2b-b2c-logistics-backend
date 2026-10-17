@@ -582,9 +582,7 @@ app.get("/route", (_: Request, res: Response) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: integer
- *             format: int32
- *             example: 2
+ *             $ref: '#/components/schemas/SeatInterface'
  *     responses:
  *       200:
  *         description: Route seats successfully edited.

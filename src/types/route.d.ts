@@ -17,6 +17,14 @@ export interface Route {
   companyDriverId: number | null;
 }
 
+export interface SeatInterface {
+  changeSeat: number;
+}
+
+export interface RouteId {
+  routeId: number;
+}
+
 export interface RouteWithId extends Route {
   routeId: number;
 }

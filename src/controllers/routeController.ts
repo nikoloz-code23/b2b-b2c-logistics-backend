@@ -5,7 +5,9 @@ import {
   Route,
   RouteFullData,
   RouteFullDataDriverPreview,
+  RouteId,
   RouteWithId,
+  SeatInterface,
 } from "../types/route";
 import { PreviewUser } from "../types/user";
 import { CompanyDriverPreview } from "../types/driver";
@@ -140,7 +142,7 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
         data.additionalInfo ?? null,
         data.companyDriverId,
         id,
-      ) as RouteWithId | undefined;
+      ) as RouteId | undefined;
 
     if (!editedRoute) {
       throw new HttpError("Route does not exist.", 404);
@@ -159,13 +161,19 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
   }
 }
 
-export function updateRouteSeats(db: DatabaseSync, data: number, id: number) {
+export function updateRouteSeats(
+  db: DatabaseSync,
+  data: SeatInterface,
+  id: number,
+) {
   try {
     const editedRoute = db
       .prepare(
         "UPDATE routes SET availableSeats=? WHERE routeId = ? RETURNING routeId",
       )
-      .get(data, id) as RouteWithId | undefined;
+      .get(data.changeSeat, id) as RouteId | undefined;
+
+    console.log(editedRoute);
 
     if (!editedRoute) {
       throw new HttpError("Route does not exist.", 404);
