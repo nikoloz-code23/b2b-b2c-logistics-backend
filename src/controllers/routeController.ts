@@ -159,6 +159,31 @@ export function editRoute(db: DatabaseSync, data: Route, id: number) {
   }
 }
 
+export function updateRouteSeats(db: DatabaseSync, data: number, id: number) {
+  try {
+    const editedRoute = db
+      .prepare(
+        "UPDATE routes SET availableSeats=? WHERE routeId = ? RETURNING routeId",
+      )
+      .get(data, id) as RouteWithId | undefined;
+
+    if (!editedRoute) {
+      throw new HttpError("Route does not exist.", 404);
+    }
+
+    return new HttpResponse(
+      "Route has been succesfully edited.",
+      editedRoute?.routeId,
+    );
+  } catch (e) {
+    if (e instanceof HttpError) {
+      throw e;
+    }
+
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
 export function deleteRoute(db: DatabaseSync, id: number) {
   try {
     db.prepare("DELETE FROM routes WHERE routeId = ?").run(id);

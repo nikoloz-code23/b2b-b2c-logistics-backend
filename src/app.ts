@@ -16,6 +16,7 @@ import {
   editRoute,
   deleteRoute,
   getAllRoutes,
+  updateRouteSeats,
 } from "./controllers/routeController";
 import {
   newUser,
@@ -562,6 +563,49 @@ app.get("/route", (_: Request, res: Response) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
+ *
+ * /route/editSeat/{routeId}:
+ *   put:
+ *     tags:
+ *       - Routes
+ *     summary: Edit a route seat
+ *     parameters:
+ *       - name: routeId
+ *         in: path
+ *         required: true
+ *         description: ID of the route to edit seats for.
+ *         schema:
+ *           type: integer
+ *           format: int64
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: integer
+ *             format: int32
+ *             example: 2
+ *     responses:
+ *       200:
+ *         description: Route seats successfully edited.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HttpResponse'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       404:
+ *         description: Route does not exist.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
  */
 app.get("/route/:routeId", (req: Request, res: Response) => {
   const { routeId } = req.params;
@@ -592,6 +636,23 @@ app.put("/route/:routeId", authenticateToken, (req: Request, res: Response) => {
 
   try {
     const result: HttpResponse = editRoute(db, req.body, Number(routeId));
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
+});
+
+app.put("/route/editSeat/:routeId", (req: Request, res: Response) => {
+  const { routeId } = req.params;
+
+  try {
+    const result: HttpResponse = updateRouteSeats(
+      db,
+      req.body,
+      Number(routeId),
+    );
     return res.status(200).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
