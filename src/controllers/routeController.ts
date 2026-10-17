@@ -30,7 +30,7 @@ export function getAllRoutes(db: DatabaseSync) {
 
       const companyDriverData = db
         .prepare(
-          "SELECT photoURL, firstName, lastName FROM companyDriver WHERE id=?",
+          "SELECT photoURL, phoneNumber, firstName, lastName FROM companyDriver WHERE id=?",
         )
         .get(route.companyDriverId) as CompanyDriverPreview | undefined;
 
@@ -65,7 +65,7 @@ export function getRouteData(db: DatabaseSync, id: number) {
 
     const companyDriverData = db
       .prepare(
-        "SELECT photoURL, firstName, lastName FROM companyDriver WHERE id=?",
+        "SELECT photoURL, phoneNumber, firstName, lastName FROM companyDriver WHERE id=?",
       )
       .get(routeData.companyDriverId) as CompanyDriverPreview | undefined;
 
