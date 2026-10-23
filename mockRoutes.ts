@@ -1,10 +1,4 @@
-import type { RouteRequest } from '../models/RouteProps';
-
-// Mock data: 35 routes across Georgia.
-// userId 1-3, 6-15 — regular drivers (companyDriverId: null),
-// userId 4-5 — companies (companyDriverId references company_drivers 1-15).
-// routeId is omitted — SQL auto-increment will assign it.
-export const mockRoutes: RouteRequest[] = [
+export const mockRoutes = [
   {
     fromCity: 'Tbilisi',
     toCity: 'Batumi',

@@ -1,11 +1,4 @@
-import type { UserOrCompany } from '../models/AuthProps';
-import type { CompanyDriver } from '../models/UserProps';
-
-// Mock users matching the ids referenced in mockRoutes.ts:
-// id 1-3, 6-15 — individual drivers (type: 'driver'),
-// id 4-5 — transport companies (type: 'company').
-// idNumber: 11 digits for a person, 9 digits for a company (Georgian format).
-export const mockUsers: UserOrCompany[] = [
+export const mockUsers = [
   {
     id: 1,
     type: 'driver',
@@ -193,7 +186,7 @@ export const mockUsers: UserOrCompany[] = [
 // interface — the API returns drivers already scoped to their company).
 // Drivers 1, 2, 5, 6-10 belong to Kavkasia Trans (userId 4),
 // drivers 3, 4, 11-15 belong to Iberia Lines (userId 5) — exactly as used in routes.
-export const mockCompanyDrivers: (CompanyDriver & { companyId: number })[] = [
+export const mockCompanyDrivers = [
   {
     id: 1,
     companyId: 4,
