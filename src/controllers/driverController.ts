@@ -3,6 +3,20 @@ import { DatabaseSync, StatementSync } from "node:sqlite";
 import { CompanyDriverData, CompanyDriverEssential } from "../types/driver";
 import { HttpResponse, HttpError } from "../config/database";
 
+export function getCompanyDriver(db: DatabaseSync, id: number) {
+  try {
+    const data = db
+      .prepare(
+        "SELECT photoURL, firstName, lastName, phoneNumber FROM routes WHERE id=?",
+      )
+      .get(id) as CompanyDriverEssential | undefined;
+
+    return data;
+  } catch (e) {
+    throw new HttpError("Internal Server Error", 500);
+  }
+}
+
 export function addCompanyDriver(db: DatabaseSync, data: CompanyDriverData) {
   const insert: StatementSync = db.prepare(
     "INSERT INTO companyDriver (photoURL, firstName, lastName, phoneNumber, companyId) VALUES (?, ?, ?, ?, ?) RETURNING id",

@@ -9,6 +9,7 @@ import {
   addCompanyDriver,
   editCompanyDriver,
   deleteCompanyDriver,
+  getCompanyDriver,
 } from "./controllers/driverController";
 import {
   getRouteData,
@@ -42,6 +43,7 @@ import swaggerSpec from "./config/swagger";
 import { JwtPayload } from "./express";
 
 import cookieParser from "cookie-parser";
+import { CompanyDriverEssential } from "./types/driver";
 
 const app: Express = express();
 const port: number = 3000;
@@ -677,6 +679,54 @@ app.delete(
     }
   },
 );
+
+/**
+ * @openapi
+ * /driver/:id:
+ *   get:
+ *     tags:
+ *       - Company Drivers
+ *     summary: Get a company driver
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: integer
+ *             format: int64
+ *     responses:
+ *       201:
+ *         description: Company driver successfully added.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CompanyDriverEssential'
+ *       401:
+ *         description: Missing or invalid authentication token.
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+app.get("/driver/:id", authenticateToken, (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const result: CompanyDriverEssential | undefined = getCompanyDriver(
+      db,
+      Number(id),
+    );
+    return res.status(200).json(result);
+  } catch (e) {
+    if (e instanceof HttpError) {
+      return res.status(e.statusCode).json({ message: e.message });
+    }
+  }
+});
 
 /**
  * @openapi
