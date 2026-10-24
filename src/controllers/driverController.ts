@@ -7,7 +7,7 @@ export function getCompanyDriver(db: DatabaseSync, id: number) {
   try {
     const data = db
       .prepare(
-        "SELECT photoURL, firstName, lastName, phoneNumber FROM routes WHERE id=?",
+        "SELECT photoURL, firstName, lastName, phoneNumber FROM companyDriver WHERE id=?",
       )
       .get(id) as CompanyDriverEssential | undefined;
 
