@@ -340,6 +340,11 @@ app.get("/overview/:userId", (req: Request, res: Response) => {
  *         description: Missing or invalid authentication token.
  */
 app.post("/logout", authenticateToken, (_: Request, res: Response) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    path: "/",
+  });
+
   res.status(200).json(new HttpResponse("Logged out succesfully."));
 });
 
