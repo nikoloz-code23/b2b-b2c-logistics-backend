@@ -12,13 +12,49 @@ import {
 import { PreviewUser } from "../types/user";
 import { CompanyDriverPreview } from "../types/driver";
 
-export function getAllRoutes(db: DatabaseSync) {
-  // This is NOT optimized and honestly can be odne better, but I am sick.
+export interface RouteFilters {
+  fromCity?: string;
+  toCity?: string;
+  departureDate?: string;
+  availableSeats?: number | string;
+}
+
+export function getAllRoutes(db: DatabaseSync, filters: RouteFilters = {}) {
+  // This is NOT optimized and honestly can be done better, but I am sick.
   // For this project, sadly it will do.
   try {
+    const conditions: string[] = [];
+    const params: (string | number)[] = [];
+
+    if (filters.fromCity) {
+      conditions.push('"fromCity" LIKE ?');
+      params.push(`%${filters.fromCity}%`);
+    }
+
+    if (filters.toCity) {
+      conditions.push('"toCity" LIKE ?');
+      params.push(`%${filters.toCity}%`);
+    }
+    if (filters.departureDate) {
+      conditions.push('"departureDate" = ?');
+      params.push(filters.departureDate);
+    }
+    if (
+      filters.availableSeats !== undefined &&
+      filters.availableSeats !== null
+    ) {
+      conditions.push('"availableSeats" >= ?');
+      params.push(Number(filters.availableSeats));
+    }
+
+    let query = "SELECT * FROM routes";
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
     const routeArray = db
-      .prepare("SELECT * FROM routes")
-      .all() as unknown as RouteFullDataDriverPreview[];
+      .prepare(query)
+      .all(...params) as unknown as RouteFullDataDriverPreview[];
     if (!routeArray) return [];
 
     const routeData: RouteFullDataDriverPreview[] = [];

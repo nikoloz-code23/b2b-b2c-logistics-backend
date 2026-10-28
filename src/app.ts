@@ -453,14 +453,23 @@ app.put("/edit/:id", authenticateToken, (req: Request, res: Response) => {
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-app.get("/route", (_: Request, res: Response) => {
+app.get("/route", (req: Request, res: Response) => {
   try {
-    const result: Route[] | undefined = getAllRoutes(db);
+    const { fromCity, toCity, departureDate, availableSeats } = req.query;
+
+    const result = getAllRoutes(db, {
+      fromCity: fromCity as string | undefined,
+      toCity: toCity as string | undefined,
+      departureDate: departureDate as string | undefined,
+      availableSeats: availableSeats ? Number(availableSeats) : undefined,
+    });
+
     return res.status(200).json(result);
   } catch (e) {
     if (e instanceof HttpError) {
       return res.status(e.statusCode).json({ message: e.message });
     }
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
