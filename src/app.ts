@@ -49,11 +49,8 @@ const app: Express = express();
 const port: number = 3000;
 
 const corsOptions = {
-  origin: "http://localhost:5173/",
+  origin: true,
   credentials: true,
-  // methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  // preflightContinue: false,
-  // optionsSuccessStatus: 204,
 };
 
 app.use(express.json());
